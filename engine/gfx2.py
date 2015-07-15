@@ -66,40 +66,66 @@ def clear():
 		_screen.erase()
 
 class Ventana:
-	def __init__(self, x, y, pos_x = 0, pos_y = 0):
-		self.win = curses.newwin(y, 2*x, pos_y, 2*pos_x)
+	def __init__(self, fileName, vision=10, pos_x = 0, pos_y = 0):
+		self.win = curses.newwin(2*(vision+1), 2*2*(vision+1), pos_y, 2*pos_x)
+		archivo=open(fileName,"r")
+		x=len(archivo.readline())
+		archivo.close()
 		self.x=x
-		self.y=y
+		self.y=0
+		self.vision=vision
 		self.map = []
-		self.map.append([BlockedBox.getBox()]*(x+2))
-		for i in range (1,x+1):
+		for i in range(vision):
+			self.map.append([NullBox.getBox()]*(self.x+2*vision))
+		archivo=open(fileName,"r")
+		y=0
+		for linea in archivo:
+			y+=1
 			fila=[]
-			fila.append(BlockedBox.getBox())
-			for j in range(1,y+1):
-				fila.append(EmptyBox.getBox())
-			fila.append(BlockedBox.getBox())
+			for j in range(vision):
+				fila.append(NullBox.getBox())
+			for char in linea:
+				if (char=="#"):
+					fila.append(BlockedBox.getBox())
+				elif (char=="."):
+					fila.append(EmptyBox.getBox())
+				elif (char=="P"):
+					fila.append(PowerBox.getBox())
+			for j in range(vision):
+				fila.append(NullBox.getBox())                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      
 			self.map.append(fila)
-		self.map.append([BlockedBox.getBox()]*(x+2))
-		self.map[7][7]=BlockedBox.getBox()
+		for i in range(vision):
+			self.map.append([NullBox.getBox()]*(self.x+2*vision))
+		self.x=x+2*vision
+		self.y=y+2*vision
 
 	def addch(self, x, y, c):
-		self.win.addch(y, 2*x, c)
+		self.win.addch(x, 2*y, c)
+
+	def clean(self,x,y):
+		self.map[x][y]=EmptyBox.getBox()
 
 	def refresh(self,personaje):
-		for i in range(1,self.x+1):
-			for j in range(1,self.y+1):
-				self.map[i][j].draw(i-1,j-1,self)
-		draw(personaje.getX(), personaje.getY(), personaje.getIcon(), win)
+		x=personaje.getX()
+		y=personaje.getY()
+		a=0
+		for i in range(x-self.vision,x+self.vision+1):
+			b=0
+			for j in range(y-self.vision,y+self.vision+1):
+				self.map[i][j].draw(a,b,self)
+				b+=1
+			a+=1
+		personaje.draw(self.vision,self.vision,self)
 		self.win.refresh()
 
 	def accept(self,i,j,personaje):
-		self.map[i+1][j+1].accept(i,j,personaje)
+		self.map[i][j].accept(i,j,personaje,self)
 
 if __name__ == '__main__':
 	try:
 		start()
+		win = Ventana("map2.txt")
 		personaje = Character(10, 10)
-		win = Ventana(20, 20)
 		while 1:
 			win.refresh(personaje)
 			q = get_input()
